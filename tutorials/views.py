@@ -5,18 +5,24 @@ from django.http import HttpResponse, FileResponse
 from django.http.response import JsonResponse
 from rest_framework.parsers import JSONParser 
 from rest_framework import status
+
+from rest_framework.response import Response
  
 from tutorials.models import Tutorial
 from tutorials.serializers import TutorialSerializer
 from rest_framework.decorators import api_view
+from .config import *
+from .enrollment import get_embedding_view
 
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import cv2
-import base64
-import ctxcore as ctx
-from io import BytesIO
+import csv
+
+# import cv2
+# import base64
+# import ctxcore as ctx
+# from io import BytesIO
 
 
 
@@ -24,31 +30,39 @@ from io import BytesIO
 @api_view(['GET', 'POST', 'DELETE'])
 def tutorial_list(request):
     if request.method == 'GET':
-        tutorials = Tutorial.objects.all()
+        # tutorials = Tutorial.objects.all()
         
-        title = request.query_params.get('title', None)
-        if title is not None:
-            tutorials = tutorials.filter(title__icontains=title)
+        # title = request.query_params.get('title', None)
+        # if title is not None:
+        #     tutorials = tutorials.filter(title__icontains=title)
         
-        tutorials_serializer = TutorialSerializer(tutorials, many=True)
-        return JsonResponse(tutorials_serializer.data, safe=False)
+        # tutorials_serializer = TutorialSerializer(tutorials, many=True)
+        return HttpResponse('I am ALIVE!', safe=False)
         # 'safe=False' for objects serialization
  
     elif request.method == 'POST':
         form = TutorialForm(request.POST, request.FILES)
 
-        img = request.FILES['Img']
+        # img = request.FILES['Img']
+        img = Image.open(request.FILES['Img']).convert('RGB')
 
-        img = Image.open(img)
-        def get_base64(image):
-            buffered = BytesIO()
-            image.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue())
-            return img_str.decode()
+        v_array = get_embedding_view(img, eval_model(), device, transform)
+        print('%%%%%%%%')
+        print(v_array)
+
+        return Response('embedding is: ' + str(v_array))
         
-        base_image = get_base64(img)
+        # img = Image.open(img)
+        # def get_base64(image):
+        #     buffered = BytesIO()
+        #     image.save(buffered, format="JPEG")
+        #     img_str = base64.b64encode(buffered.getvalue())
+        #     print(img_str.decode())
+        #     return img_str.decode()
         
-        return HttpResponse("<img src='data:image/png;base64,"+base_image+"'/>")
+        # base_image = get_base64(img)
+        
+        # return HttpResponse("<img src='data:image/png;base64,"+base_image+"'/>")
 
         # with open(img, 'rb') as image_file:
         #     print("=+++++_+_+__+_+")

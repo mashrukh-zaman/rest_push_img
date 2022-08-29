@@ -23,34 +23,67 @@ from django.template import loader
 import os
 import pandas as pd
 
+from .models import Tutorial
+from rest_framework import serializers
+import json
+# from rest_framework import APIView
+
 # import cv2
 # import base64
 # import ctxcore as ctx
 # from io import BytesIO
 
-
+# class CattleIdentiicaitonView(APIView):
+#     model= Tutorial
+#     def get(self, request):
+#         return render(request, 'cattle_identification.html')
+    
+#     def post(self, request):
+#         form = CattleIdentificationForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('cattle_identification')
+#         return render(request, 'cattle_identification.html', {'form': form})
 
 
 @api_view(['GET', 'POST', 'DELETE'])
 def tutorial_list(request):
     if request.method == 'GET':
-        # tutorials = Tutorial.objects.all()
+        tutorials = Tutorial.objects.all()
         
-        # title = request.query_params.get('title', None)
-        # if title is not None:
-        #     tutorials = tutorials.filter(title__icontains=title)
+        title = request.query_params.get('title', None)
+        if title is not None:
+            tutorials = tutorials.filter(title__icontains=title)
         
-        # tutorials_serializer = TutorialSerializer(tutorials, many=True)
+        tutorials_serializer = TutorialSerializer(tutorials, many=True)
         return HttpResponse('I am ALIVE!', 'safe=False')
         # 'safe=False' for objects serialization
  
     elif request.method == 'POST':
+        
+    #     # queryset = request.POST.get("queryset", request.data)
+    #     form = TutorialForm(request.POST, request.FILES)
+    #     form.serializer = TutorialSerializer
+    #     return Response(form)
+        
+        
         form = TutorialForm(request.POST, request.FILES)
 
         # img = request.FILES['Img']
         img = Image.open(request.FILES['Img']).convert('RGB')
         cow_id = request.POST.get('title')
         v_array = get_embedding_view(img, eval_model(), device, transform)
+
+        # response_data = []
+        # final_response = {}
+
+        # for i in v_array:
+        #     response_record = {}
+        #     response_record['cow'] = i.title
+        #     response_data.append(response_record)
+
+        # final_response["v_array"] = response_data
+        # return HttpResponse(json.dumps(final_response, sort_keys=True), "application/json")
 
         if not os.path.exists("D:/Work/postimg\\embedding.csv"):
             print("if is working")
@@ -71,6 +104,8 @@ def tutorial_list(request):
             pdist = torch.nn.PairwiseDistance(p=2)
             output = pdist(input1, input2)
             return output
+
+        
 
                 
                 # response = HttpResponse(content_type='text/csv', headers={'Content-Disposition': 'attachment; filename="embedding.csv"'},)

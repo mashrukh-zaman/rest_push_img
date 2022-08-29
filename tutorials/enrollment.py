@@ -114,7 +114,7 @@ def get_embedding(image_path, model, device, transform):
 def get_embedding_view(image, model, device, transform):
     
     image = transform(image).reshape(1, 3, 224, 224).to(device)
-    image_embd = model(image).detach().cpu().numpy().flatten()
+    image_embd = model(image).detach().cpu().n.flatten()
     return image_embd
 
 

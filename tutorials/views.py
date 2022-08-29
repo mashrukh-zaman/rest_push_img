@@ -1,3 +1,4 @@
+from wsgiref import headers
 from django.shortcuts import render, redirect
 from .forms import *
 from django.http import HttpResponse, FileResponse
@@ -18,6 +19,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import csv
+from django.template import loader
+import os
+import pandas as pd
 
 # import cv2
 # import base64
@@ -37,7 +41,7 @@ def tutorial_list(request):
         #     tutorials = tutorials.filter(title__icontains=title)
         
         # tutorials_serializer = TutorialSerializer(tutorials, many=True)
-        return HttpResponse('I am ALIVE!', safe=False)
+        return HttpResponse('I am ALIVE!', 'safe=False')
         # 'safe=False' for objects serialization
  
     elif request.method == 'POST':
@@ -45,12 +49,38 @@ def tutorial_list(request):
 
         # img = request.FILES['Img']
         img = Image.open(request.FILES['Img']).convert('RGB')
-
+        cow_id = request.POST.get('title')
         v_array = get_embedding_view(img, eval_model(), device, transform)
-        print('%%%%%%%%')
-        print(v_array)
 
-        return Response('embedding is: ' + str(v_array))
+        if not os.path.exists("D:/Work/postimg\\embedding.csv"):
+            print("if is working")
+            df = pd.DataFrame()
+            
+        else:
+            print("else is working")
+            df = pd.read_csv("D:/Work/postimg\\embedding.csv")
+            
+        df[cow_id] = v_array
+        df.to_csv("D:/Work/postimg\\embedding.csv", index=False)
+
+        df = pd.read_csv("D:/Work/postimg\\embedding.csv")          
+
+        def pair_distance(db):
+            input1 = torch.from_numpy(db.iloc[:,1].values)
+            input2 = torch.from_numpy(db.iloc[:,2].values)
+            pdist = torch.nn.PairwiseDistance(p=2)
+            output = pdist(input1, input2)
+            return output
+
+                
+                # response = HttpResponse(content_type='text/csv', headers={'Content-Disposition': 'attachment; filename="embedding.csv"'},)
+                # writer = csv.writer(response)
+                # writer.writerow(v_array)
+                # print('++++++++++++')
+
+        return HttpResponse(pair_distance(df))
+
+        # return Response('embedding is: ' + str(v_array))
         
         # img = Image.open(img)
         # def get_base64(image):
